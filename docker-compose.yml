@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+  data:
+    image: debian
+    volumes:
+      - ./code/sandbox:/code
+
+  nginx:
+    image: nginx
+    ports:
+      - '8000:8000'
+    volumes_from:
+      - data
+    volumes:
+      - ./docker/conf/nginx_vhost.conf:/etc/nginx/conf.d/app.conf:ro
+
+  fpm:
+    build: docker/php-fpm
+    volumes_from:
+      - data
+    volumes:
+      - ./docker/conf/php.ini:/usr/local/etc/php/php.ini:ro
+    env_file:
+      - .env
+
+  mysql:
+    image: mysql:5.6
+    ports:
+        - 3333:3306
+    volumes:
+        - ./data/mysql:/var/lib/mysql
+    environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  console:
+    build: docker/php-console
+    volumes_from:
+      - data
+    volumes:
+      - ./docker/conf/php.ini:/usr/local/etc/php/php.ini:ro
+    env_file:
+      - .env
